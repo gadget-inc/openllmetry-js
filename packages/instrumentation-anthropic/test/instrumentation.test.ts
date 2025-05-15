@@ -231,62 +231,57 @@ describe("Test Anthropic instrumentation", async function () {
     );
   }).timeout(30000);
 
-  it.skip(
-    "should set attributes in span for messages (streaming)",
-    async () => {
-      const stream = anthropic.messages.stream({
-        max_tokens: 1024,
-        messages: [
-          { role: "user", content: "Tell me a joke about OpenTelemetry" },
-        ],
-        model: "claude-3-opus-20240229",
-      });
-      const message = await stream.finalMessage();
+  it("should set attributes in span for messages (streaming)", async () => {
+    const stream = anthropic.messages.stream({
+      max_tokens: 1024,
+      messages: [
+        { role: "user", content: "Tell me a joke about OpenTelemetry" },
+      ],
+      model: "claude-3-opus-20240229",
+    });
+    const message = await stream.finalMessage();
 
-      const spans = memoryExporter.getFinishedSpans();
-      const chatSpan = spans.find((span) => span.name === "anthropic.chat");
+    const spans = memoryExporter.getFinishedSpans();
+    const chatSpan = spans.find((span) => span.name === "anthropic.chat");
 
-      assert.ok(message);
-      assert.ok(chatSpan);
-      assert.strictEqual(
-        chatSpan.attributes[`${SpanAttributes.LLM_REQUEST_MODEL}`],
-        "claude-3-opus-20240229",
-      );
-      assert.strictEqual(
-        chatSpan.attributes[`${SpanAttributes.LLM_RESPONSE_MODEL}`],
-        "claude-3-opus-20240229",
-      );
-      assert.strictEqual(
-        chatSpan.attributes[`${SpanAttributes.LLM_REQUEST_MAX_TOKENS}`],
-        1024,
-      );
-      assert.strictEqual(
-        chatSpan.attributes[`${SpanAttributes.LLM_PROMPTS}.0.role`],
-        "user",
-      );
-      assert.strictEqual(
-        chatSpan.attributes[`${SpanAttributes.LLM_PROMPTS}.0.content`],
-        `Tell me a joke about OpenTelemetry`,
-      );
-      assert.strictEqual(
-        chatSpan.attributes[`${SpanAttributes.LLM_COMPLETIONS}.0.role`],
-        "assistant",
-      );
-      assert.strictEqual(
-        chatSpan.attributes[`${SpanAttributes.LLM_COMPLETIONS}.0.content`],
-        JSON.stringify(message.content),
-      );
-      assert.equal(
-        chatSpan.attributes[`${SpanAttributes.LLM_USAGE_PROMPT_TOKENS}`],
-        17,
-      );
-      assert.equal(
-        +chatSpan.attributes[`${SpanAttributes.LLM_USAGE_PROMPT_TOKENS}`]! +
-          +chatSpan.attributes[
-            `${SpanAttributes.LLM_USAGE_COMPLETION_TOKENS}`
-          ]!,
-        chatSpan.attributes[`${SpanAttributes.LLM_USAGE_TOTAL_TOKENS}`],
-      );
-    },
-  ).timeout(30000);
+    assert.ok(message);
+    assert.ok(chatSpan);
+    assert.strictEqual(
+      chatSpan.attributes[`${SpanAttributes.LLM_REQUEST_MODEL}`],
+      "claude-3-opus-20240229",
+    );
+    assert.strictEqual(
+      chatSpan.attributes[`${SpanAttributes.LLM_RESPONSE_MODEL}`],
+      "claude-3-opus-20240229",
+    );
+    assert.strictEqual(
+      chatSpan.attributes[`${SpanAttributes.LLM_REQUEST_MAX_TOKENS}`],
+      1024,
+    );
+    assert.strictEqual(
+      chatSpan.attributes[`${SpanAttributes.LLM_PROMPTS}.0.role`],
+      "user",
+    );
+    assert.strictEqual(
+      chatSpan.attributes[`${SpanAttributes.LLM_PROMPTS}.0.content`],
+      `Tell me a joke about OpenTelemetry`,
+    );
+    assert.strictEqual(
+      chatSpan.attributes[`${SpanAttributes.LLM_COMPLETIONS}.0.role`],
+      "assistant",
+    );
+    assert.strictEqual(
+      chatSpan.attributes[`${SpanAttributes.LLM_COMPLETIONS}.0.content`],
+      JSON.stringify(message.content),
+    );
+    assert.equal(
+      chatSpan.attributes[`${SpanAttributes.LLM_USAGE_PROMPT_TOKENS}`],
+      17,
+    );
+    assert.equal(
+      +chatSpan.attributes[`${SpanAttributes.LLM_USAGE_PROMPT_TOKENS}`]! +
+        +chatSpan.attributes[`${SpanAttributes.LLM_USAGE_COMPLETION_TOKENS}`]!,
+      chatSpan.attributes[`${SpanAttributes.LLM_USAGE_TOTAL_TOKENS}`],
+    );
+  }).timeout(30000);
 });
