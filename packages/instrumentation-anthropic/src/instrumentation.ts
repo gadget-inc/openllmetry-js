@@ -270,6 +270,9 @@ export class AnthropicInstrumentation extends InstrumentationBase {
       this: AnthropicInstrumentation,
       stream: Stream<MessageStreamEvent> | Stream<Completion>,
     ) {
+      const startTime = Date.now();
+      let firstTokenSeen = false;
+
       try {
         if (type === "chat") {
           const result: Message = {
@@ -290,6 +293,11 @@ export class AnthropicInstrumentation extends InstrumentationBase {
           };
 
           for await (const chunk of stream) {
+            if (!firstTokenSeen) {
+              this._emitFirstTokenEvent(span, startTime);
+              firstTokenSeen = true;
+            }
+
             yield chunk;
 
             try {
@@ -342,6 +350,11 @@ export class AnthropicInstrumentation extends InstrumentationBase {
             stop_reason: null,
           };
           for await (const chunk of await promise) {
+            if (!firstTokenSeen) {
+              this._emitFirstTokenEvent(span, startTime);
+              firstTokenSeen = true;
+            }
+
             yield chunk;
 
             try {
@@ -504,5 +517,14 @@ export class AnthropicInstrumentation extends InstrumentationBase {
     return this._config.traceContent !== undefined
       ? this._config.traceContent
       : true;
+  }
+
+  private _emitFirstTokenEvent(span: Span, startTime: number) {
+    const now = Date.now();
+    span.addEvent(
+      "gen_ai.first_token",
+      { "gen_ai.time_to_first_token_ms": now - startTime },
+      now,
+    );
   }
 }
